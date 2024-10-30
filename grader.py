@@ -6,7 +6,7 @@ import csv
 def read_solution_quries(filename):
     solutions = {}
     with open(filename, mode='r', encoding='utf-8') as file:
-        csv_reader = csv.DictReader(file)
+        csv_reader = csv.DictReader(file, skipinitialspace=True)
         for row in csv_reader:
             question = row['question']
             query = row['query']
@@ -40,7 +40,7 @@ def extract_queries(file_path):
         content = file.read()
         matches = re.findall(r'-- Q(\d+):.*?-- Provide your answer below\s+(.*?)(?=\n-- Q\d+:|$)', content, re.DOTALL)
         for match in matches:
-            question_num = f'Q{match[0]}'
+            question_num = f'q{match[0]}'
             query = match[1].strip()
             queries[question_num] = query
     return queries
@@ -58,7 +58,7 @@ def execute_and_grade(queries, correct_results, conn):
             else:
                 grades[question] = 'Incorrect'
         except Exception as e:
-            grades[question] = f'Error: {e}'
+            grades[question] = f'Error'
     return grades
 
 # Function to write grades to a file
@@ -79,9 +79,12 @@ def process_all_submissions(directory, correct_answers, server, database):
 
     for file_name in os.listdir(directory):
         if file_name.endswith('.sql'):
+            print(f'Processing {file_name}...')
             file_path = os.path.join(directory, file_name)
-            student_name = file_name.split('_')[0]  # Assuming student name is part of the file name
-            student_id = file_name.split('_')[1]    # Assuming student ID is part of the file name
+            # Assuming student name is the second last part of the file name
+            student_name = file_name.split('_')[-2]  
+            # Assuming student ID is the last part of the file name
+            student_id = file_name.split('_')[-1]    
 
             student_queries = extract_queries(file_path)  # Extract student's SQL queries
             grades = execute_and_grade(student_queries, correct_results, conn)  # Grade student submission
@@ -103,7 +106,7 @@ if __name__ == '__main__':
     solution = 'solutions.csv'
     
     correct_answers = read_solution_quries(solution)
-
-    generate_output_file()
+    
+    generate_output_file(questions=correct_answers.keys())
 
     process_all_submissions(directory, correct_answers, server, database)

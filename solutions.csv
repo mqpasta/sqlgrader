@@ -1,3 +1,4 @@
+question,query
 q1, "select First_Name, Last_Name, Salary, Joining_date, DEPT_NAME from worker w inner join department d on w.dept_id = d.id where dept_Name = 'Admin'"
 q2, "select D.DEPT_NAME, Sum(isnull(Salary,0)) as TotalSalary from Worker W right Join Department D ON w.DEPT_ID=D.ID group by D.DEPT_NAME"
 q3, "select Sum(salary) from worker where worker.DEPT_ID is null"
