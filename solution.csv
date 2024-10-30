@@ -1,0 +1,6 @@
+q1, "select First_Name, Last_Name, Salary, Joining_date, DEPT_NAME from worker w inner join department d on w.dept_id = d.id where dept_Name = 'Admin'"
+q2, "select D.DEPT_NAME, Sum(isnull(Salary,0)) as TotalSalary from Worker W right Join Department D ON w.DEPT_ID=D.ID group by D.DEPT_NAME"
+q3, "select Sum(salary) from worker where worker.DEPT_ID is null"
+q4, "select FIRST_NAME, LAST_NAME, SALARY from worker w left join Bonus b on w.WORKER_ID = b.WORKER_REF_ID where b.WORKER_REF_ID is null order by SALARY"
+q5, "select FIRST_NAME, LAST_NAME, d.DEPT_NAME from worker w inner join title t on t.WORKER_REF_ID = w.WORKER_ID inner join Department d on d.ID = w.DEPT_ID group by FIRST_NAME, LAST_NAME, d.DEPT_NAME having count(1)>1"
+q6, "select distinct FIRST_NAME, LAST_NAME from Worker w left join title t on w.WORKER_ID = t.WORKER_REF_ID left join Designation d on d.ID = t.DESIGNATION_ID where t.WORKER_REF_ID is null" 

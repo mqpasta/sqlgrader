@@ -1,6 +1,17 @@
 import pyodbc
 import re
 import os
+import csv
+
+def read_solution_quries(filename):
+    solutions = {}
+    with open(filename, mode='r', encoding='utf-8') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            question = row['question']
+            query = row['query']
+            solutions[question] = query
+    return solutions
 
 # Connection to the MS SQL Server database (Windows Authentication)
 def connect_db(server, database):
@@ -89,12 +100,9 @@ if __name__ == '__main__':
     directory = 'submissions'
     server = '.\SQLEXPRESS'
     database = 'eis'
+    solution = 'solutions.csv'
     
-    # Correct answers for comparison
-    correct_answers = {
-        'Q1': 'SELECT * FROM department;',
-        'Q2': "SELECT * FROM bonus;"
-    }
+    correct_answers = read_solution_quries(solution)
 
     generate_output_file()
 
