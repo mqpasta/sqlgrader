@@ -4,6 +4,8 @@ import os
 import csv
 import sys
 
+DEBUG = False
+
 def read_solution_quries(filename):
     solutions = {}
     with open(filename, mode='r', encoding='utf-8') as file:
@@ -29,8 +31,13 @@ def execute_correct_answers(answers, conn):
     correct_results = {}
     cursor = conn.cursor()
     for question, query in answers.items():
+        cursor.execute("BEGIN TRANSACTION;")
         cursor.execute(query)
-        result = cursor.fetchall()
+        if query.lower().startswith('select'):
+            result = cursor.fetchall()
+        else:
+            result = cursor.rowcount
+        conn.rollback()
         correct_results[question] = result
     return correct_results
 
@@ -52,12 +59,18 @@ def execute_and_grade(queries, correct_results, conn):
     grades = {}
     errors = {}
     for question, query in queries.items():
+        #print(query)
         try:
             if len(query) == 0:
                 grades[question] = 'Not Attempted'
                 continue
+            cursor.execute("BEGIN TRANSACTION;")
             cursor.execute(query)
-            student_result = cursor.fetchall()
+            if query.lower().startswith('select'):
+                student_result = cursor.fetchall()
+            else:
+                student_result = cursor.rowcount
+            cursor.rollback()
             if student_result == correct_results.get(question):
                 grades[question] = 'Correct'
             else:
@@ -66,6 +79,7 @@ def execute_and_grade(queries, correct_results, conn):
         except Exception as e:
             grades[question] = f'Error'
             errors[question] = f'Error: {e}'
+        #print(grades[question])
     return grades, errors
 
 # Function to write grades to a file
@@ -83,8 +97,11 @@ def write_grades(student_name, student_id, grades, output_file='grades.txt'):
 def process_all_submissions(directory, correct_answers, server, database):
     conn = connect_db(server, database)
     correct_results = execute_correct_answers(correct_answers, conn)  # Store the correct results
+    conn.close()
 
     for file_name in os.listdir(directory):
+        # open a new connection for each file to avoid conflicts
+        conn = connect_db(server, database)
         if file_name.endswith('.sql'):
             print(f'Processing {file_name}...')
             file_path = os.path.join(directory, file_name)
@@ -97,12 +114,12 @@ def process_all_submissions(directory, correct_answers, server, database):
             grades, errors = execute_and_grade(student_queries, correct_results, conn)  # Grade student submission
             write_grades(student_name, student_id, grades)  # Write grades to file
             if len(errors) > 0:
-                with open("errors/"+file_name+".log", 'a') as file:
+                with open("errors/"+file_name+".log", 'w+') as file:
                     for question, error in errors.items():
                         file.write(f'{question}: {error}\n')
                     file.write('\n')
-
-    conn.close()
+        # clsoe connection for the current file
+        conn.close()
 
 def generate_output_file(output_file='grades.txt', questions=['Q1', 'Q2']):
     with open(output_file, 'w') as file:
@@ -119,7 +136,7 @@ def create_error_directory(directory):
 if __name__ == '__main__':
     directory = 'submissions'
     server = '.\SQLEXPRESS'
-    database = 'eis'
+    database = 'eis_q4'
     solution = 'solutions.csv'
     error_directory = 'errors'
 
@@ -127,7 +144,9 @@ if __name__ == '__main__':
         print(f"Argument {index}: {arg}")
     
     create_error_directory(error_directory)
-    correct_answers = read_solution_quries(solution)
+    # correct_answers = read_solution_quries(solution)
+    correct_answers = extract_queries('Quiz5_L1_Solution.sql')
+    
     
     generate_output_file(questions=correct_answers.keys())
 
