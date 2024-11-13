@@ -1,3 +1,5 @@
 /submissions/*
 /errors/*
-grades.txt
+*.sql
+*.csv
+*grades.txt
